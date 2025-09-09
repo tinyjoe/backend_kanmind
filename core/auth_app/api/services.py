@@ -12,6 +12,5 @@ def authenticate_user_by_email(email: str, password: str):
         user_obj = User.objects.get(email=email)
     except User.DoesNotExist:
         return None
-
     user = authenticate(username=user_obj.username, password=password)
     return user

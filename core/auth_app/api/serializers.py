@@ -18,3 +18,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         validate_passwords(pw, repeated_pw)
         validate_unique_email(email)
         return create_new_user(email=email, password=pw, fullname=fullname)
+    
+class UserLoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
