@@ -1,5 +1,7 @@
 from django.contrib.auth.models import User
+
 from rest_framework import serializers
+
 from kanban_app.models import Board, BoardTask, TaskComment
 from .validators import validate_board_member, validate_user_in_board
 
@@ -29,9 +31,13 @@ class BoardListSerializer(serializers.ModelSerializer):
         return 0
 
 class UserNestedSerializer(serializers.ModelSerializer):
+    fullname = serializers.SerializerMethodField()
     class Meta: 
         model = User
-        fields = ['id', 'email', 'username']
+        fields = ['id', 'email', 'fullname']
+
+    def get_fullname(self, obj):
+        return obj.username
 
 
 class TaskListSerializer(serializers.ModelSerializer):
@@ -60,8 +66,17 @@ class TaskListSerializer(serializers.ModelSerializer):
         return 0
 
 class BoardDetailSerializer(serializers.ModelSerializer):
-    members = UserNestedSerializer(many=True)
-    tasks = serializers.PrimaryKeyRelatedField(queryset=BoardTask.objects.all(), many=True)
+    members = UserNestedSerializer(many=True, read_only=True)
+    tasks = TaskListSerializer(many=True, read_only=True)
     class Meta:
         model = Board
         fields = ['id', 'title', 'owner_id', 'members', 'tasks']
+
+class UserEmailCheckSerializer(serializers.ModelSerializer):
+    fullname = serializers.SerializerMethodField()
+    class Meta:
+        model = User
+        fields = ["id", "email", "fullname"]
+
+    def get_fullname(self, obj):
+        return obj.username

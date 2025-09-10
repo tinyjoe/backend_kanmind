@@ -1,13 +1,15 @@
 from django.db.models import Q
 
-from rest_framework.decorators import api_view
+from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import mixins, viewsets, generics
+from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 
-from .serializers import BoardListSerializer, TaskListSerializer, BoardDetailSerializer
+from .serializers import BoardListSerializer, TaskListSerializer, BoardDetailSerializer, UserEmailCheckSerializer
 from kanban_app.models import Board, BoardTask, TaskComment
-from .permissions import IsBoardOwnerOrMember, IsBoardMember
+from .permissions import IsBoardOwnerOrMember, IsBoardMember, IsTaskReviewer, IsTaskAssignee
+from .validators import validate_email_address
+from .services import get_user_by_email
 
 class BoardsView(generics.ListCreateAPIView):
     queryset = Board.objects.all()
@@ -44,11 +46,44 @@ class TaskListView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsBoardMember]
 
     def get_queryset(self):
-        board = self.request.board
-        return BoardTask.objects.filter(Q(board=board)).distinct()
+        return BoardTask.objects.all()
     
     def post(self, request):
         serializer = self.get_serializer(data=request.data, context={"request": request})
-        if serializer.is_valid():
-            self.perform_create(serializer)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
         return Response(serializer.data)
+    
+class TaskReviewingListView(generics.ListAPIView):
+    queryset = BoardTask.objects.all()
+    serializer_class = TaskListSerializer
+    permission_classes = [IsAuthenticated, IsTaskReviewer]
+
+    def get_queryset(self):
+        user = self.request.user
+        return BoardTask.objects.filter(Q(reviewer=user))
+    
+
+class AssignedTaskListView(generics.ListAPIView):
+    queryset = BoardTask.objects.all()
+    serializer_class = TaskListSerializer
+    permission_classes = [IsAuthenticated, IsTaskAssignee]
+
+    def get_queryset(self):
+        user = self.request.user
+        return BoardTask.objects.filter(Q(assignee=user))
+    
+
+class CheckEmailView(APIView):
+    permission_classes = [IsAuthenticated] 
+
+    def get(self, request):
+        email = request.query_params.get("email")
+        error_response = validate_email_address(email)
+        if error_response:
+            return error_response
+        user = get_user_by_email(email)
+        if isinstance(user, Response):
+            return user
+        serializer = UserEmailCheckSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
