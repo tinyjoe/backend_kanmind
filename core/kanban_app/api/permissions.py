@@ -16,31 +16,18 @@ class IsBoardOwnerOrMember(BasePermission):
             return False
     
 class IsBoardMember(BasePermission):
-    def has_permission(self, request, view):
-        board_id = request.data.get('board')
-        try: 
-            board = Board.objects.get(id=board_id)
-        except Board.DoesNotExist:
-            return False
-        return bool(board.members.filter(id=request.user.id).exists())
+    def has_object_permission(self, request, view, obj):
+        board = obj.board
+        return board.members.filter(id=request.user.id).exists()
     
-class IsTaskReviewer(BasePermission):
-    def has_permission(self, request, view):
-        task_id = request.data.get('task')
-        try: 
-            task = BoardTask.objects.get(id=task_id)
-        except BoardTask.DoesNotExist:
-            return False
-        return bool(request.user == task.reviewer)
-    
-class IsTaskAssignee(BasePermission):
-    def has_permission(self, request, view):
-        task_id = request.data.get('task')
-        try: 
-            task = BoardTask.objects.get(id=task_id)
-        except BoardTask.DoesNotExist:
-            return False
-        if request.method == 'GET':
-            return bool(request.user == task.reviewer)
+class IsAllowedToUpdateOrDelete(BasePermission):
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        if request.method in SAFE_METHODS:
+            return True
+        elif request.method == 'PATCH':
+            return obj.board.members.filter(id=user.id).exists()
+        elif request.method == 'DELETE':
+            return (obj.creator == user) or (obj.board.owner == user)
         else:
             return False

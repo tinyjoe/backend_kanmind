@@ -5,9 +5,9 @@ from rest_framework.response import Response
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 
-from .serializers import BoardListSerializer, TaskListSerializer, BoardDetailSerializer, UserEmailCheckSerializer
+from .serializers import BoardListSerializer, TaskListSerializer, BoardDetailSerializer, UserNestedSerializer, TaskDetailSerializer
 from kanban_app.models import Board, BoardTask, TaskComment
-from .permissions import IsBoardOwnerOrMember, IsBoardMember, IsTaskReviewer, IsTaskAssignee
+from .permissions import IsBoardOwnerOrMember, IsBoardMember, IsAllowedToUpdateOrDelete
 from .validators import validate_email_address
 from .services import get_user_by_email
 
@@ -51,13 +51,13 @@ class TaskListView(generics.ListCreateAPIView):
     def post(self, request):
         serializer = self.get_serializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
+        serializer.save(creator = request.user)
         return Response(serializer.data)
     
 class TaskReviewingListView(generics.ListAPIView):
     queryset = BoardTask.objects.all()
     serializer_class = TaskListSerializer
-    permission_classes = [IsAuthenticated, IsTaskReviewer]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
@@ -67,7 +67,7 @@ class TaskReviewingListView(generics.ListAPIView):
 class AssignedTaskListView(generics.ListAPIView):
     queryset = BoardTask.objects.all()
     serializer_class = TaskListSerializer
-    permission_classes = [IsAuthenticated, IsTaskAssignee]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
@@ -85,5 +85,10 @@ class CheckEmailView(APIView):
         user = get_user_by_email(email)
         if isinstance(user, Response):
             return user
-        serializer = UserEmailCheckSerializer(user)
+        serializer = UserNestedSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = BoardTask.objects.all()
+    serializer_class = TaskDetailSerializer
+    permission_classes = [IsAuthenticated, IsAllowedToUpdateOrDelete]
