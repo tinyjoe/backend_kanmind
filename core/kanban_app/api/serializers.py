@@ -14,6 +14,15 @@ class UserNestedSerializer(serializers.ModelSerializer):
 
     def get_fullname(self, obj):
         return obj.username
+    
+class AuthorNestedSerializer(serializers.ModelSerializer):
+    fullname = serializers.SerializerMethodField()
+    class Meta: 
+        model = User
+        fields = ['fullname']
+
+    def get_fullname(self, obj):
+        return obj.username
 
 
 class TaskListSerializer(serializers.ModelSerializer):
@@ -55,7 +64,6 @@ class TaskDetailSerializer(serializers.ModelSerializer):
 class BoardListSerializer(serializers.ModelSerializer):
     members = serializers.ListField(child=serializers.IntegerField(), write_only=True, required=False)
     member_count = serializers.SerializerMethodField()
-    tasks = TaskListSerializer(many=True, read_only=True)
     ticket_count = serializers.SerializerMethodField()
     tasks_to_do_count = serializers.SerializerMethodField()
     tasks_high_prio_count = serializers.SerializerMethodField()
@@ -83,3 +91,16 @@ class BoardDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Board
         fields = ['id', 'title', 'owner_id', 'members', 'tasks']
+
+
+class TaskCommentSerializer(serializers.ModelSerializer):
+    author = author = serializers.CharField(source='author.username', read_only=True)
+    class Meta:
+        model = TaskComment
+        fields = ['id', 'created_at', 'author', 'content']
+        read_only_fields = ['id', 'created_at', 'author']
+
+    def validate_content(self, value):
+        if not value.strip():
+            raise serializers.ValidationError('Content darf nicht leer sein.')
+        return value
