@@ -1,5 +1,4 @@
-from rest_framework.permissions import BasePermission, IsAuthenticated, SAFE_METHODS
-from kanban_app.models import Board, BoardTask
+from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 class IsBoardOwnerOrMember(BasePermission):
     def has_permission(self, request, view):
@@ -19,6 +18,18 @@ class IsBoardMember(BasePermission):
     def has_object_permission(self, request, view, obj):
         board = obj.board
         return board.members.filter(id=request.user.id).exists()
+    
+class IsAssignee(BasePermission):
+    def has_object_permission(self, request, view, obj):
+        if request.method == 'GET':
+            return bool(request.user == obj.assignee)
+        return True
+    
+class IsReviewer(BasePermission):
+    def has_object_permission(self, request, view, obj):
+        if request.method == 'GET':
+            return bool(request.user == obj.reviewer)
+        return True
     
 class IsAllowedToUpdateOrDelete(BasePermission):
     def has_object_permission(self, request, view, obj):

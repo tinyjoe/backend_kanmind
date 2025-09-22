@@ -6,6 +6,8 @@ from rest_framework import serializers
 from kanban_app.models import Board, BoardTask, TaskComment
 from .validators import validate_board_member, validate_user_in_board
 
+
+# This class is a nested serializer for the User model in Django, including a custom method to retrieve the user's full name.
 class UserNestedSerializer(serializers.ModelSerializer):
     fullname = serializers.SerializerMethodField()
     class Meta: 
@@ -14,7 +16,9 @@ class UserNestedSerializer(serializers.ModelSerializer):
 
     def get_fullname(self, obj):
         return obj.username
-    
+
+
+# This class is a nested serializer for the User model that includes a SerializerMethodField for the fullname field to show only the full name of a user in the comment.
 class AuthorNestedSerializer(serializers.ModelSerializer):
     fullname = serializers.SerializerMethodField()
     class Meta: 
@@ -25,15 +29,29 @@ class AuthorNestedSerializer(serializers.ModelSerializer):
         return obj.username
 
 
+class TaskCommentSerializer(serializers.ModelSerializer):
+    author = author = serializers.CharField(source='author.username', read_only=True)
+    class Meta:
+        model = TaskComment
+        fields = ['id', 'created_at', 'author', 'content']
+        read_only_fields = ['id', 'created_at', 'author']
+
+    def validate_content(self, value):
+        if not value.strip():
+            raise serializers.ValidationError('Content darf nicht leer sein.')
+        return value
+
+
 class TaskListSerializer(serializers.ModelSerializer):
     assignee_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), source='assignee', write_only=True, required=False, allow_null=True)
     reviewer_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), source='reviewer', write_only=True, required=False, allow_null=True)
     assignee = UserNestedSerializer(read_only=True)
     reviewer = UserNestedSerializer(read_only=True)
+    comments = TaskCommentSerializer
     comments_count = serializers.SerializerMethodField()
     class Meta: 
         model = BoardTask
-        fields = ['id', 'board', 'title', 'description', 'status', 'priority', 'assignee_id', 'reviewer_id', 'due_date', 'comments_count', 'assignee', 'reviewer']
+        fields = ['id', 'board', 'title', 'description', 'status', 'priority', 'assignee_id', 'reviewer_id', 'assignee', 'reviewer', 'due_date', 'comments_count']
 
     def validate(self, data):
         board = data.get('board')
@@ -46,9 +64,9 @@ class TaskListSerializer(serializers.ModelSerializer):
         if reviewer:
             validate_user_in_board(board, reviewer.id, 'Reviewer')
         return data
-
+    
     def get_comments_count(self, obj):
-        return 0
+        return obj.comments.count()
 
 class TaskDetailSerializer(serializers.ModelSerializer):
     assignee_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), source='assignee', write_only=True, required=False, allow_null=True)
@@ -91,16 +109,3 @@ class BoardDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Board
         fields = ['id', 'title', 'owner_id', 'members', 'tasks']
-
-
-class TaskCommentSerializer(serializers.ModelSerializer):
-    author = author = serializers.CharField(source='author.username', read_only=True)
-    class Meta:
-        model = TaskComment
-        fields = ['id', 'created_at', 'author', 'content']
-        read_only_fields = ['id', 'created_at', 'author']
-
-    def validate_content(self, value):
-        if not value.strip():
-            raise serializers.ValidationError('Content darf nicht leer sein.')
-        return value

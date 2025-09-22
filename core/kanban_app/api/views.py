@@ -9,7 +9,7 @@ from rest_framework.exceptions import NotFound, PermissionDenied
 
 from .serializers import BoardListSerializer, TaskListSerializer, BoardDetailSerializer, UserNestedSerializer, TaskDetailSerializer, TaskCommentSerializer
 from kanban_app.models import Board, BoardTask, TaskComment
-from .permissions import IsBoardOwnerOrMember, IsBoardMember, IsAllowedToUpdateOrDelete
+from .permissions import IsBoardOwnerOrMember, IsBoardMember, IsAllowedToUpdateOrDelete, IsAssignee, IsReviewer
 from .validators import validate_email_address
 from .services import get_user_by_email
 
@@ -59,7 +59,7 @@ class TaskListView(generics.ListCreateAPIView):
 class TaskReviewingListView(generics.ListAPIView):
     queryset = BoardTask.objects.all()
     serializer_class = TaskListSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsReviewer]
 
     def get_queryset(self):
         user = self.request.user
@@ -69,7 +69,7 @@ class TaskReviewingListView(generics.ListAPIView):
 class AssignedTaskListView(generics.ListAPIView):
     queryset = BoardTask.objects.all()
     serializer_class = TaskListSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAssignee]
 
     def get_queryset(self):
         user = self.request.user
@@ -94,7 +94,6 @@ class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = BoardTask.objects.all()
     serializer_class = TaskDetailSerializer
     permission_classes = [IsAuthenticated, IsAllowedToUpdateOrDelete]
-
 
 class TaskCommentMixin:
     def get_task(self):
