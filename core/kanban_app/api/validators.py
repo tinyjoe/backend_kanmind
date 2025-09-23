@@ -31,6 +31,14 @@ def validate_user_in_board(board, user_id, field_name):
         raise serializers.ValidationError({'error': f'{field_name} has to be a member of the board.'})
 
 
+
+def validate_board_user_relation(self, board, assignee, reviewer):
+        if assignee:
+            validate_user_in_board(board, assignee.id, 'Assignee')
+        if reviewer:
+            validate_user_in_board(board, reviewer.id, 'Reviewer')
+
+
 """
     The function `validate_email_address` checks if an email address is provided and validates its
     format.

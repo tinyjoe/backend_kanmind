@@ -3,16 +3,18 @@ from django.shortcuts import get_object_or_404
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import generics, status
+from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import NotFound, PermissionDenied
+from rest_framework.exceptions import PermissionDenied
 
-from .serializers import BoardListSerializer, TaskListSerializer, BoardDetailSerializer, UserNestedSerializer, TaskDetailSerializer, TaskCommentSerializer
+from .serializers import BoardListSerializer, TaskListSerializer, BoardDetailSerializer, UserNestedSerializer, TaskDetailSerializer, TaskCommentSerializer, BoardDetailUpdateSerializer
 from kanban_app.models import Board, BoardTask, TaskComment
-from .permissions import IsBoardOwnerOrMember, IsBoardMember, IsAllowedToUpdateOrDelete, IsAssignee, IsReviewer
+from .permissions import IsBoardOwnerOrMember, IsBoardMember, IsAllowedToUpdateOrDelete, IsAssignee, IsReviewer, IsBoardOfTaskMember
 from .validators import validate_email_address
 from .services import get_user_by_email
 
+
+# The `BoardsView` class defines a view for listing and creating Board objects, with permission checks for authenticated users who are either the owner or a member of a board.
 class BoardsView(generics.ListCreateAPIView):
     queryset = Board.objects.all()
     serializer_class = BoardListSerializer
@@ -36,12 +38,19 @@ class BoardsView(generics.ListCreateAPIView):
             return Response(serializer.errors)
         
 
+# This is a view for retrieving, updating, and deleting a Board object with different serializer classes based on the request method. For retrieving and updating are two different responses provided. These requests can only be performed if the user is the owner or one of the members of the board.
 class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Board.objects.all()
-    serializer_class = BoardDetailSerializer
     permission_classes = [IsAuthenticated, IsBoardOwnerOrMember]
+
+    def get_serializer_class(self):
+        if self.request.method == 'PATCH':
+            return BoardDetailUpdateSerializer
+        return BoardDetailSerializer
         
 
+# This class represents a view in a Django REST framework API for listing and creating BoardTask
+# objects with authentication and permission checks.
 class TaskListView(generics.ListCreateAPIView):
     queryset = BoardTask.objects.all()
     serializer_class = TaskListSerializer
@@ -56,6 +65,7 @@ class TaskListView(generics.ListCreateAPIView):
         serializer.save(creator = request.user)
         return Response(serializer.data)
     
+# This class represents a view for listing tasks that have the logged in user as the reviewer.
 class TaskReviewingListView(generics.ListAPIView):
     queryset = BoardTask.objects.all()
     serializer_class = TaskListSerializer
@@ -66,6 +76,7 @@ class TaskReviewingListView(generics.ListAPIView):
         return BoardTask.objects.filter(Q(reviewer=user))
     
 
+# This class represents a view for listing tasks that have the logged in user as the assignee.
 class AssignedTaskListView(generics.ListAPIView):
     queryset = BoardTask.objects.all()
     serializer_class = TaskListSerializer
@@ -75,7 +86,8 @@ class AssignedTaskListView(generics.ListAPIView):
         user = self.request.user
         return BoardTask.objects.filter(Q(assignee=user))
     
-
+    
+# A view to check if a specific mail address can be found in the user data to check if the user of this mail address can be added to a board as a member.
 class CheckEmailView(APIView):
     permission_classes = [IsAuthenticated] 
 
@@ -88,8 +100,10 @@ class CheckEmailView(APIView):
         if isinstance(user, Response):
             return user
         serializer = UserNestedSerializer(user)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    
+        return Response(serializer.data)
+
+
+# This is a view for retrieving, updating and deleting tasks of a specific board. The permissions requires the logged in user to be member of the board for updating the task and to be creator or board owner for deleting the task.
 class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = BoardTask.objects.all()
     serializer_class = TaskDetailSerializer
@@ -107,22 +121,20 @@ class TaskCommentMixin:
         
 class TaskCommentListView(TaskCommentMixin, generics.ListCreateAPIView):
     serializer_class = TaskCommentSerializer
-    permission_classes = [IsAuthenticated, IsBoardMember]
+    permission_classes = [IsAuthenticated, IsBoardOfTaskMember]
 
     def get_queryset(self):
         return TaskComment.objects.filter(task=self.get_task())
 
     def perform_create(self, serializer):
-        self.check_board_membership()
         serializer.save(task=self.get_task(), author=self.request.user)
 
 
 class TaskCommentDeleteView(TaskCommentMixin, generics.DestroyAPIView):
     serializer_class = TaskCommentSerializer
-    permission_classes = [IsAuthenticated, IsBoardMember]
+    permission_classes = [IsAuthenticated, IsBoardOfTaskMember]
 
     def get_object(self):
-        self.check_board_membership()
         return get_object_or_404(TaskComment, pk=self.kwargs['comment_id'], task=self.get_task())
 
     def perform_destroy(self, instance):

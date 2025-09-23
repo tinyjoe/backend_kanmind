@@ -7,7 +7,7 @@ class IsBoardOwnerOrMember(BasePermission):
         return True  
     def has_object_permission(self, request, view, obj):
         user = request.user
-        if request.method in SAFE_METHODS:
+        if request.method in SAFE_METHODS or request.method == 'PATCH':
             return obj.owner == user or user in obj.members.all()
         elif request.method == 'DELETE':
             return obj.owner == user
@@ -18,6 +18,22 @@ class IsBoardMember(BasePermission):
     def has_object_permission(self, request, view, obj):
         board = obj.board
         return board.members.filter(id=request.user.id).exists()
+    
+class IsBoardOfTaskMember(BasePermission):
+    def has_permission(self, request, view):
+        task = view.get_task()
+        if not task:
+            return False
+        if request.method in SAFE_METHODS or request.method == 'POST':
+            return task.board.members.filter(id=request.user.id).exists()
+        return request.method == 'DELETE'
+
+    def has_object_permission(self, request, view, obj):
+        if request.method == "DELETE":
+            return obj.author_id == request.user.id
+        if request.method in SAFE_METHODS:
+            return obj.task.board.members.filter(id=request.user.id).exists()
+        return False
     
 class IsAssignee(BasePermission):
     def has_object_permission(self, request, view, obj):

@@ -4,7 +4,7 @@ from django.db.models import Q
 from rest_framework import serializers
 
 from kanban_app.models import Board, BoardTask, TaskComment
-from .validators import validate_board_member, validate_user_in_board
+from .validators import validate_board_member, validate_board_user_relation
 
 
 # This class is a nested serializer for the User model in Django, including a custom method to retrieve the user's full name.
@@ -29,6 +29,7 @@ class AuthorNestedSerializer(serializers.ModelSerializer):
         return obj.username
 
 
+# The `TaskCommentSerializer` class defines a serializer for task comments with fields for id, creation date, author, and content, along with validation for the content field that must not be empty.
 class TaskCommentSerializer(serializers.ModelSerializer):
     author = author = serializers.CharField(source='author.username', read_only=True)
     class Meta:
@@ -38,16 +39,16 @@ class TaskCommentSerializer(serializers.ModelSerializer):
 
     def validate_content(self, value):
         if not value.strip():
-            raise serializers.ValidationError('Content darf nicht leer sein.')
+            raise serializers.ValidationError('The content must not be empty')
         return value
 
 
+# The `TaskListSerializer` class serializes task data including assignee, reviewer, and comments count, with validation for board members and users.
 class TaskListSerializer(serializers.ModelSerializer):
     assignee_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), source='assignee', write_only=True, required=False, allow_null=True)
     reviewer_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), source='reviewer', write_only=True, required=False, allow_null=True)
     assignee = UserNestedSerializer(read_only=True)
     reviewer = UserNestedSerializer(read_only=True)
-    comments = TaskCommentSerializer
     comments_count = serializers.SerializerMethodField()
     class Meta: 
         model = BoardTask
@@ -56,18 +57,17 @@ class TaskListSerializer(serializers.ModelSerializer):
     def validate(self, data):
         board = data.get('board')
         user = self.context['request'].user
-        validate_board_member(board, user)
         assignee = data.get('assignee')
         reviewer = data.get('reviewer')
-        if assignee:
-            validate_user_in_board(board, assignee.id, 'Assignee')
-        if reviewer:
-            validate_user_in_board(board, reviewer.id, 'Reviewer')
+        validate_board_member(board, user)
+        validate_board_user_relation(board, assignee, reviewer)
         return data
     
     def get_comments_count(self, obj):
         return obj.comments.count()
 
+
+# The `TaskDetailSerializer` class provides `BoardTask` objects with fields for task details and related users such as assignee and reviewer.
 class TaskDetailSerializer(serializers.ModelSerializer):
     assignee_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), source='assignee', write_only=True, required=False, allow_null=True)
     reviewer_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), source='reviewer', write_only=True, required=False, allow_null=True)
@@ -79,6 +79,8 @@ class TaskDetailSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'description', 'status', 'priority', 'assignee_id', 'reviewer_id', 'due_date', 'assignee', 'reviewer']
         read_only_fields = ['creator', 'board']
 
+
+# The `BoardListSerializer` class provides a list of Board objects with additional fields for member count,ticket count, tasks to do count, and high priority tasks count.
 class BoardListSerializer(serializers.ModelSerializer):
     members = serializers.ListField(child=serializers.IntegerField(), write_only=True, required=False)
     member_count = serializers.SerializerMethodField()
@@ -103,9 +105,29 @@ class BoardListSerializer(serializers.ModelSerializer):
         high_prio_tasks = obj.tasks.filter(Q(priority='high'))
         return high_prio_tasks.count()
 
+
+# The `BoardDetailSerializer` class provides board details including specific details about members and tasks.
 class BoardDetailSerializer(serializers.ModelSerializer):
     members = UserNestedSerializer(many=True, read_only=True)
     tasks = TaskListSerializer(many=True, read_only=True)
     class Meta:
         model = Board
         fields = ['id', 'title', 'owner_id', 'members', 'tasks']
+
+
+# The `BoardDetailUpdateSerializer` class is only to provide a specific response for PATCH-requests. The responses are different to the `BoardDetailSerializer`
+class BoardDetailUpdateSerializer(serializers.ModelSerializer):
+    members = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), write_only=True, required=False)
+    owner_data = UserNestedSerializer(source="owner", read_only=True)
+    members_data = UserNestedSerializer(source="members", many=True, read_only=True)
+
+    class Meta:
+        model = Board
+        fields = ["id", "title", "owner_data", "members", "members_data"]
+
+    def update(self, instance, validated_data):
+        members = validated_data.pop('members', None)
+        instance = super().update(instance, validated_data)
+        if members is not None:
+            instance.members.set(members)
+        return instance
