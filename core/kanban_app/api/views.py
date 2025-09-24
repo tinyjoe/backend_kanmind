@@ -109,6 +109,8 @@ class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = TaskDetailSerializer
     permission_classes = [IsAuthenticated, IsAllowedToUpdateOrDelete]
 
+
+# The `TaskCommentMixin` class provides methods to retrieve a task and check if the current user is a member of the board associated with that task.
 class TaskCommentMixin:
     def get_task(self):
         task_id = self.kwargs.get('task_id')
@@ -119,6 +121,8 @@ class TaskCommentMixin:
         if not task.board.members.filter(id=self.request.user.id).exists():
             raise PermissionDenied('You have to be a member of the board.')
         
+
+# This class represents a view for listing and creating task comments with permissions for board members and a filter method to get the comments of a specific task.
 class TaskCommentListView(TaskCommentMixin, generics.ListCreateAPIView):
     serializer_class = TaskCommentSerializer
     permission_classes = [IsAuthenticated, IsBoardOfTaskMember]
@@ -130,6 +134,7 @@ class TaskCommentListView(TaskCommentMixin, generics.ListCreateAPIView):
         serializer.save(task=self.get_task(), author=self.request.user)
 
 
+# The class `TaskCommentDeleteView` allows users who are board members of a task to delete their own comments.
 class TaskCommentDeleteView(TaskCommentMixin, generics.DestroyAPIView):
     serializer_class = TaskCommentSerializer
     permission_classes = [IsAuthenticated, IsBoardOfTaskMember]

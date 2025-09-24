@@ -90,7 +90,9 @@ class BoardListSerializer(serializers.ModelSerializer):
     class Meta: 
         model= Board
         fields = ['id', 'title', 'member_count', 'ticket_count', 'tasks_to_do_count', 'tasks_high_prio_count', 'owner_id', 'members']
-
+    """
+    These functions calculate the count of the members, all tickets of the board, all tasks with the status `to do` or task with high priority
+    """
     def get_member_count(self, obj):
         return obj.members.count()
     

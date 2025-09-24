@@ -31,7 +31,14 @@ def validate_user_in_board(board, user_id, field_name):
         raise serializers.ValidationError({'error': f'{field_name} has to be a member of the board.'})
 
 
-
+"""
+    The function `validate_board_user_relation` checks if the assignee and reviewer are valid users in
+    the given board.
+    :param board: The board object 
+    :param assignee: The assigned user to the task
+    :param reviewer: The user which is the reviewer of the task
+    This function checks if the given users are members of the provided board.
+    """
 def validate_board_user_relation(self, board, assignee, reviewer):
         if assignee:
             validate_user_in_board(board, assignee.id, 'Assignee')
