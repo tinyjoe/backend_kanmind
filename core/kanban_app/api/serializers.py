@@ -100,7 +100,7 @@ class BoardListSerializer(serializers.ModelSerializer):
         return obj.tasks.count()
 
     def get_tasks_to_do_count(self, obj):
-        to_do_tasks = obj.tasks.filter(Q(status='todo'))
+        to_do_tasks = obj.tasks.filter(Q(status='to-do'))
         return to_do_tasks.count()
 
     def get_tasks_high_prio_count(self, obj):

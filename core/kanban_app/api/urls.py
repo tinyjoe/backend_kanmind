@@ -1,4 +1,3 @@
-from django.contrib import admin
 from django.urls import path
 from .views import BoardsView, TaskListView, BoardDetailView, TaskReviewingListView, AssignedTaskListView, CheckEmailView, TaskDetailView, TaskCommentListView, TaskCommentDeleteView
 

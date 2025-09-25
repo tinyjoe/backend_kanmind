@@ -3,8 +3,8 @@ from django.contrib.auth.models import User
 
 # The `STATUS_CHOICES` defines the possible choices for the `status` field in the `BoardTask` model. 
 STATUS_CHOICES = [
-        ('todo', 'To Do'),
-        ('in_progress', 'In Progress'),
+        ('to-do', 'To Do'),
+        ('in-progress', 'In Progress'),
         ('review', 'Review'),
         ('done', 'Done'),
     ]

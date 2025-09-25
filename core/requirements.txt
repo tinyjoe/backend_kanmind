@@ -2,6 +2,7 @@ asgiref==3.9.1
 certifi==2025.7.14
 Django==5.2.4
 django-cors-headers==4.7.0
+django-extensions==4.1
 djangorestframework==3.16.1
 dotenv==0.9.9
 numpy==2.3.1

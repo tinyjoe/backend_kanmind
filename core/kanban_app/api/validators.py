@@ -39,7 +39,7 @@ def validate_user_in_board(board, user_id, field_name):
     :param reviewer: The user which is the reviewer of the task
     This function checks if the given users are members of the provided board.
     """
-def validate_board_user_relation(self, board, assignee, reviewer):
+def validate_board_user_relation(board, assignee, reviewer):
         if assignee:
             validate_user_in_board(board, assignee.id, 'Assignee')
         if reviewer:
