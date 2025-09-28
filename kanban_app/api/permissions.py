@@ -1,4 +1,7 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.exceptions import PermissionDenied
+
+from kanban_app.models import Board
 
 
 # This permission provides retrieving and updating rights for board members and the board owner and deleting rights for the board owner.
@@ -17,8 +20,20 @@ class IsBoardOwnerOrMember(BasePermission):
             return False
 
 
-# Object Permission when the user is member of the board.   
+# Object Permission when the user is member of the board.  
 class IsBoardMember(BasePermission):
+    def has_permission(self, request, view):
+        if request.method in ('POST', 'PATCH', 'DELETE', 'GET'):
+            board_id = request.data.get('board')
+            if board_id: 
+                try:
+                    board = Board.objects.get(pk=board_id)
+                except Board.DoesNotExist:
+                    return True
+                if not board.members.filter(id=request.user.id).exists():
+                    raise PermissionDenied('You are not a member of this board!')
+        return True
+    
     def has_object_permission(self, request, view, obj):
         board = obj.board
         return board.members.filter(id=request.user.id).exists()

@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 
@@ -33,9 +33,9 @@ class BoardsView(generics.ListCreateAPIView):
             if members_ids:
                 board.members.add(*members_ids)
             read_serializer = self.get_serializer(board)
-            return Response(read_serializer.data)
+            return Response(read_serializer.data, status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
 
 # This is a view for retrieving, updating, and deleting a Board object with different serializer classes based on the request method. For retrieving and updating are two different responses provided. These requests can only be performed if the user is the owner or one of the members of the board.
@@ -63,7 +63,7 @@ class TaskListView(generics.ListCreateAPIView):
         serializer = self.get_serializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         serializer.save(creator = request.user)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
     
 # This class represents a view for listing tasks that have the logged in user as the reviewer.
 class TaskReviewingListView(generics.ListAPIView):
@@ -131,7 +131,12 @@ class TaskCommentListView(TaskCommentMixin, generics.ListCreateAPIView):
         return TaskComment.objects.filter(task=self.get_task())
 
     def perform_create(self, serializer):
-        serializer.save(task=self.get_task(), author=self.request.user)
+        if serializer.is_valid():
+            serializer.save(task=self.get_task(), author=self.request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else: 
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
 
 
 # The class `TaskCommentDeleteView` allows users who are board members of a task to delete their own comments.
