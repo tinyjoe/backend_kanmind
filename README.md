@@ -8,6 +8,13 @@ A RESTful backend service for the task management application KanMind.
 The project is called 'backend_kanmind', but project files are stored in the 'core' folder. Please refer to 'core/settings.py' for further details.
 
 
+## Requirements
+
+Python 3.13
+Django 5.2.4
+SQLite 3
+
+
 ## Django Apps
 
 Apps include: 
@@ -18,34 +25,47 @@ Apps include:
 
 ## Installation
 
-On macOS and Linux:
+Clone the repostiory:
 ```sh
-$ python -m pip install backend_kanmind
+git clone https://github.com/tinyjoe/backend_kanmind.git
+cd backend_kanmind
 ```
 
-On Windows:
+Create a virtual environment
 ```sh
-PS> python -m pip install backend_kanmind
+python -m venv env
+source venv/bin/activate   # On Windows: venv\Scripts\activate
 ```
 
-## Execution / Usage
-To run backend_kanmind, fire up a terminal window and run the following command:
+Install dependencies
 ```sh
-$ backend_kanmind
+pip install -r requirements.txt
 ```
 
-Here are a few examples of using the backend_kanmind library in your code:
+## Database Migrations
 
-```python
-from backend_kanmind.models import Board
-...
+Run the initial migrations
+```sh
+python manage.py migrate
 ```
+
+When you make changes to models
+```sh
+python manage.py makemigrations
+python manage.py migrate
+```
+
+## Start Development Server
+```sh
+python manage.py runserver
+```
+
 
 ## Technologies
 
 backend_kanmind uses the following technologies and tools: 
 
-![Python](	https://img.shields.io/badge/Python-FFD43B?style=for-the-badge&logo=python&logoColor=blue)  | ![Django]([https://img.shields.io/pypi/frameworkversions/django/5.2.4](https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=green)) | ![DjangoREST](https://img.shields.io/badge/django%20rest-ff1709?style=for-the-badge&logo=django&logoColor=white) | ![SQLite]([https://img.shields.io/badge/sqlite-%2307405e.svg?style=for-the-badge&logo=sqlite&logoColor=white](https://img.shields.io/badge/Sqlite-003B57?style=for-the-badge&logo=sqlite&logoColor=white))
+![Python](	https://img.shields.io/badge/Python-FFD43B?style=for-the-badge&logo=python&logoColor=blue)     ![Django](https://img.shields.io/badge/Django-5.2.4-green?style=for-the-badge&logo=django&logoColor=white)     ![DjangoREST](https://img.shields.io/badge/django%20rest-ff1709?style=for-the-badge&logo=django&logoColor=white)     ![SQLite](https://img.shields.io/badge/SQLite-3-blue?style=for-the-badge&logo=sqlite&logoColor=white)
 
 
 ## Database
