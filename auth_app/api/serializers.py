@@ -6,8 +6,9 @@ from .validators import validate_passwords, validate_unique_email
 from .services import create_new_user
 
 
-# This class defines a serializer for user registration with fields for fullname, email, password, and
-# repeated password, along with validation and saving methods.
+"""
+    This class defines a serializer for user registration with fields for fullname, email, password, and repeated password, along with validation and saving methods.
+    """
 class UserRegistrationSerializer(serializers.ModelSerializer):
     fullname = serializers.CharField(max_length=255)
     repeated_password = serializers.CharField(write_only=True)
@@ -30,8 +31,9 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return create_new_user(email=email, password=pw, fullname=fullname)
     
 
-# The class `UserLoginSerializer` defines a serializer for user login data with fields for email and
-# password.
+"""
+    The class `UserLoginSerializer` defines a serializer for user login data with fields for email and password.
+    """
 class UserLoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)

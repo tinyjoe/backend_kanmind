@@ -9,9 +9,9 @@ from .serializers import UserRegistrationSerializer, UserLoginSerializer
 from .services import authenticate_user_by_email
 
 
-# The `UserRegistrationView` class handles user registration requests by validating user input,
-# creating a new user instance, generating an authentication token, and returning relevant user data
-# or error messages.
+""" 
+The `UserRegistrationView` class handles user registration requests by validating user input, creating a new user instance, generating an authentication token, and returning relevant user data or error messages.
+"""
 class UserRegistrationView(APIView):
     permission_classes = [AllowAny]
     def post(self, request):
@@ -26,8 +26,9 @@ class UserRegistrationView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
-# The `UserLoginView` class handles user authentication by validating login credentials and gets the generated
-# a token for the authenticated user.
+"""
+The `UserLoginView` class handles user authentication by validating login credentials and gets the generated a token for the authenticated user.
+"""
 class UserLoginView(ObtainAuthToken): 
     permission_classes = [AllowAny]
     def post(self, request):

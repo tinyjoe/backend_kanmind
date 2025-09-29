@@ -7,7 +7,9 @@ from kanban_app.models import Board, BoardTask, TaskComment
 from .validators import validate_board_member, validate_board_user_relation
 
 
-# This class is a nested serializer for the User model in Django, including a custom method to retrieve the user's full name.
+"""
+This class is a nested serializer for the User model in Django, including a custom method to retrieve the user's full name.
+"""
 class UserNestedSerializer(serializers.ModelSerializer):
     fullname = serializers.SerializerMethodField()
     class Meta: 
@@ -18,7 +20,9 @@ class UserNestedSerializer(serializers.ModelSerializer):
         return obj.username
 
 
-# This class is a nested serializer for the User model that includes a SerializerMethodField for the fullname field to show only the full name of a user in the comment.
+"""
+This class is a nested serializer for the User model that includes a SerializerMethodField for the fullname field to show only the full name of a user in the comment.
+"""
 class AuthorNestedSerializer(serializers.ModelSerializer):
     fullname = serializers.SerializerMethodField()
     class Meta: 
@@ -29,7 +33,9 @@ class AuthorNestedSerializer(serializers.ModelSerializer):
         return obj.username
 
 
-# The `TaskCommentSerializer` class defines a serializer for task comments with fields for id, creation date, author, and content, along with validation for the content field that must not be empty.
+"""
+The `TaskCommentSerializer` class defines a serializer for task comments with fields for id, creation date, author, and content, along with validation for the content field that must not be empty.
+"""
 class TaskCommentSerializer(serializers.ModelSerializer):
     author = author = serializers.CharField(source='author.username', read_only=True)
     class Meta:
@@ -43,7 +49,9 @@ class TaskCommentSerializer(serializers.ModelSerializer):
         return value
 
 
-# The `TaskListSerializer` class serializes task data including assignee, reviewer, and comments count, with validation for board members and users.
+"""
+The `TaskListSerializer` class serializes task data including assignee, reviewer, and comments count, with validation for board members and users.
+"""
 class TaskListSerializer(serializers.ModelSerializer):
     assignee_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), source='assignee', write_only=True, required=False, allow_null=True)
     reviewer_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), source='reviewer', write_only=True, required=False, allow_null=True)
@@ -67,7 +75,9 @@ class TaskListSerializer(serializers.ModelSerializer):
         return obj.comments.count()
 
 
-# The `TaskDetailSerializer` class provides `BoardTask` objects with fields for task details and related users such as assignee and reviewer.
+"""
+The `TaskDetailSerializer` class provides `BoardTask` objects with fields for task details and related users such as assignee and reviewer.
+"""
 class TaskDetailSerializer(serializers.ModelSerializer):
     assignee_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), source='assignee', write_only=True, required=False, allow_null=True)
     reviewer_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), source='reviewer', write_only=True, required=False, allow_null=True)
@@ -108,7 +118,9 @@ class BoardListSerializer(serializers.ModelSerializer):
         return high_prio_tasks.count()
 
 
-# The `BoardDetailSerializer` class provides board details including specific details about members and tasks.
+"""
+The `BoardDetailSerializer` class provides board details including specific details about members and tasks.
+"""
 class BoardDetailSerializer(serializers.ModelSerializer):
     members = UserNestedSerializer(many=True, read_only=True)
     tasks = TaskListSerializer(many=True, read_only=True)
@@ -117,7 +129,9 @@ class BoardDetailSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'owner_id', 'members', 'tasks']
 
 
-# The `BoardDetailUpdateSerializer` class is only to provide a specific response for PATCH-requests. The responses are different to the `BoardDetailSerializer`
+"""
+The `BoardDetailUpdateSerializer` class is only to provide a specific response for PATCH-requests. The responses are different to the `BoardDetailSerializer`
+"""
 class BoardDetailUpdateSerializer(serializers.ModelSerializer):
     members = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), write_only=True, required=False)
     owner_data = UserNestedSerializer(source="owner", read_only=True)
