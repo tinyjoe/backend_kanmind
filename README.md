@@ -10,9 +10,16 @@ The project is called 'backend_kanmind', but project files are stored in the 'co
 
 ## Requirements
 
-Python 3.13
-Django 5.2.4
-SQLite 3
++ Python 3.13
++ Django 5.2.4
++ SQLite 3
+
+
+## Technologies
+
+backend_kanmind uses the following technologies and tools: 
+
+![Python](	https://img.shields.io/badge/Python-FFD43B?style=for-the-badge&logo=python&logoColor=blue)     ![Django](https://img.shields.io/badge/Django-5.2.4-green?style=for-the-badge&logo=django&logoColor=white)     ![DjangoREST](https://img.shields.io/badge/django%20rest-ff1709?style=for-the-badge&logo=django&logoColor=white)     ![SQLite](https://img.shields.io/badge/SQLite-3-blue?style=for-the-badge&logo=sqlite&logoColor=white)
 
 
 ## Django Apps
@@ -21,6 +28,18 @@ Apps include:
 
 + auth_app - this is for signup and login logic that don't require a token or authenticated user.
 + kanban_app - this is for the data models of Boards, Tasks und Comments and the logic for creating, updating, viewing and deleting data with different permissions. Can only be accessed by authenticated users.
+
+
+## Database
+
+The SQLite3 database used sits in the Django project root folder. It is not included within the Git repo, so must instead be requested from the system admin. 
+
+
+## Settings
+
+There is 1 settings related file:
+
++ `settings.py` (for general project settings, regardless of environment and containing publicly accessible information)
 
 
 ## Installation
@@ -61,23 +80,7 @@ python manage.py runserver
 ```
 
 
-## Technologies
 
-backend_kanmind uses the following technologies and tools: 
-
-![Python](	https://img.shields.io/badge/Python-FFD43B?style=for-the-badge&logo=python&logoColor=blue)     ![Django](https://img.shields.io/badge/Django-5.2.4-green?style=for-the-badge&logo=django&logoColor=white)     ![DjangoREST](https://img.shields.io/badge/django%20rest-ff1709?style=for-the-badge&logo=django&logoColor=white)     ![SQLite](https://img.shields.io/badge/SQLite-3-blue?style=for-the-badge&logo=sqlite&logoColor=white)
-
-
-## Database
-
-The SQLite3 database used sits in the Django project root folder (alongside this README file). It is not included within the Git repo, so must instead be requested from the system admin. 
-
-
-## Settings
-
-There is 1 settings related file:
-
-+ `settings.py` (for general project settings, regardless of environment and containing publicly accessible information)
 
 
 ## API-Documentation
